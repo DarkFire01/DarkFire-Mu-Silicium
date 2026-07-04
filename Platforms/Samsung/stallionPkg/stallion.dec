@@ -1,0 +1,3 @@
+# Google Pixel 10a (stallion) platform package declaration.
+# Intentionally empty -- stallion reuses GUIDs/PCDs from SamsungPkg,
+# SiliciumPkg and ZumaProPkg.

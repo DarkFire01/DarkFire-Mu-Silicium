@@ -1408,6 +1408,8 @@ InitUfsDriver (
   EFI_STATUS Status;
   struct UfsHost *Ufs = UfsAllocHost();
 
+  DEBUG ((EFI_D_ERROR, "UFS: InitUfsDriver dispatched\n"));
+
   Status = gBS->LocateProtocol (&gEfiChipDataProtocolGuid, NULL, (VOID *)&mChipDataProtocol);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "Failed to Locate Chip Data Protocol! Status = %r\n", Status));
@@ -1509,6 +1511,12 @@ InitUfsDriver (
       DEBUG ((EFI_D_ERROR, "UFS LUN %d DiskIO Protocol installed\n", Lun));
     }
   }
+
+  // Bring-up aid: hold the UFS init output on the framebuffer console for a
+  // few seconds. This runs in the DXE phase BEFORE the BDS draws the boot
+  // logo, so the UFS status stays readable on the panel.
+  DEBUG ((EFI_D_ERROR, "UFS: ===== init complete -- pausing 12s (readable) =====\n"));
+  gBS->Stall (12000000);
 
   return EFI_SUCCESS;
 }

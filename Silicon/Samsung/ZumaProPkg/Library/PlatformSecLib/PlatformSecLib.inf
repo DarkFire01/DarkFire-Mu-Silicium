@@ -1,0 +1,28 @@
+##
+#  Copyright (c) 2011-2012, ARM Limited. All rights reserved.
+#  Copyright (c) 2026, Pixel 10a (stallion) port.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PlatformSecLib
+  FILE_GUID                      = 7B4F2E1A-9C3D-4E8B-AA21-6F0D5C7E91B2
+  MODULE_TYPE                    = SEC
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PlatformSecLib
+
+[Sources]
+  PlatformSec.c
+
+[Sources.AArch64]
+  AArch64/PlatformHelper.S
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+  SiliciumPkg/SiliciumPkg.dec
+
+[LibraryClasses]
+  IoLib
+  MemoryMapHelperLib

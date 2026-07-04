@@ -272,21 +272,38 @@ VOID
 EFIAPI
 PlatformBootManagerUnableToBoot ()
 {
-  EFI_STATUS Status;
+  EFI_STATUS                    Status;
+  EFI_BOOT_MANAGER_LOAD_OPTION *BootOptions;
+  UINTN                         BootOptionCount;
+  UINTN                         Index;
 
   // Display No Boot OS Logo
   Status = DisplayBootGraphic (BG_NO_BOOT_OS);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%a: Failed to Display No Boot OS Logo! Status = %r\n", __FUNCTION__, Status));
-    Print (L"No Operating System Found! Please make sure that an OS is Installed.\n");
   }
+  Print (L"No Operating System Found! Dropping to the UEFI Shell.\n");
 
-  // Wait 10s
+  //
+  // No OS was found -- fall through to the built-in UEFI Shell so the device
+  // is still usable for on-target debugging. The Shell is registered as a
+  // default boot option (MsBootOptionsLibRegisterDefaultBootOptions) under
+  // PcdShellFile with the name "Internal UEFI Shell 2.0".
+  //
+  BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
+  for (Index = 0; Index < BootOptionCount; Index++) {
+    if ((BootOptions[Index].Description != NULL) &&
+        (StrCmp (BootOptions[Index].Description, L"Internal UEFI Shell 2.0") == 0)) {
+      DEBUG ((EFI_D_INFO, "%a: Launching UEFI Shell\n", __FUNCTION__));
+      EfiBootManagerBoot (&BootOptions[Index]);
+      break;
+    }
+  }
+  EfiBootManagerFreeLoadOptions (BootOptions, BootOptionCount);
+
+  // If the Shell exits (or was not found), wait then shut down.
+  Print (L"Shell exited. Shutting down in 10s.\n");
   gBS->Stall (10000000);
-
-  // Shutdown
   gRT->ResetSystem (EfiResetShutdown, EFI_SUCCESS, 0, NULL);
-
-  // Do Cpu Dead Loop
   CpuDeadLoop ();
 }
