@@ -1,0 +1,41 @@
+#
+# Boot Shim Configs
+#
+# Google ABL validates the Image header and only boots LZ4 kernels,
+# so the header mirrors the stock kernel's values
+#
+[boot_shim]
+requires_kernel_header = true
+text_offset            = 0x80000
+image_size             = 0x3227000
+flags                  = 0xA
+
+#
+# UEFI FD Configs
+#
+[uefi_fd]
+base = 0x9FC00000
+size = 0x300000
+
+#
+# Android Boot Image Kernel Configs
+#
+[boot_image_kernel]
+kernel_compression = "lz4"
+append_dtb         = false
+
+#
+# Android Boot Image Configs
+#
+[boot_image]
+base           = "0x00000000"
+kernel_offset  = "0x00008000"
+ramdisk_offset = "0x01000000"
+second_offset  = "0x00F00000"
+tags_offset    = "0x00000100"
+dtb_offset     = "0x01F00000"
+pagesize       = 4096
+dtb            = "Resources/DTBs/flame.dtb"
+header_version = 2
+os_version     = "10.0.0"
+os_patch_level = "2019-10"
