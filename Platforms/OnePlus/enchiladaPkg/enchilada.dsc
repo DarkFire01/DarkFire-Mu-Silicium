@@ -56,6 +56,13 @@
   gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|32
 
   #
+  # Debug builds print asserts and keep going, a binary DXE corrupting its pool must not halt boot
+  #
+!if $(TARGET) == DEBUG
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x07
+!endif
+
+  #
   # Platform PEI
   #
   gQcomPkgTokenSpaceGuid.PcdPlatformType|"WP"
