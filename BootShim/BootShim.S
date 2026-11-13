@@ -3,12 +3,22 @@ _Head:
   b     _Start          /* Jump to the real code */
 
 #if REQUIRES_KERNEL_HEADER == 1
+#ifndef KERNEL_TEXT_OFFSET
+#define KERNEL_TEXT_OFFSET FD_BASE
+#endif
+#ifndef KERNEL_IMAGE_SIZE
+#define KERNEL_IMAGE_SIZE FD_SIZE
+#endif
+#ifndef KERNEL_FLAGS
+#define KERNEL_FLAGS 0
+#endif
+
 _StackBase:
-  .quad FD_BASE         /* Text Offset */
+  .quad KERNEL_TEXT_OFFSET  /* Text Offset */
 
 _StackSize:
-  .quad FD_SIZE         /* Image Size */
-  .quad 0               /* Flags */
+  .quad KERNEL_IMAGE_SIZE   /* Image Size */
+  .quad KERNEL_FLAGS        /* Flags */
   .quad 0               /* Reserved */
   .quad 0               /* Reserved */
   .quad 0               /* Reserved */

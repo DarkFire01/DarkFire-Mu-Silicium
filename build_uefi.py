@@ -94,6 +94,54 @@ def parse_arguments () -> BuildContext:
         update            = args.update
     )
 
+def xxh32_short (data: bytes) -> int:
+    # xxHash32 (Seed 0) for Inputs shorter than 16 Bytes
+    p1, p2, p3, p4, p5 = 2654435761, 2246822519, 3266489917, 668265263, 374761393
+    mask = 0xFFFFFFFF
+    rotl = lambda x, r: ((x << r) | (x >> (32 - r))) & mask
+
+    h = (p5 + len (data)) & mask
+    i = 0
+    while i + 4 <= len (data):
+        h = (rotl ((h + int.from_bytes (data[i:i + 4], "little") * p3) & mask, 17) * p4) & mask
+        i += 4
+    while i < len (data):
+        h = (rotl ((h + data[i] * p5) & mask, 11) * p1) & mask
+        i += 1
+
+    h ^= h >> 15
+    h = (h * p2) & mask
+    h ^= h >> 13
+    h = (h * p3) & mask
+    h ^= h >> 16
+    return h
+
+def lz4_frame_literal (data: bytes) -> bytes:
+    # LZ4 Frame with independent 4 MiB Blocks, each holding one literal-only Sequence
+    descriptor = bytes ([0x60, 0x70])
+    frame      = bytearray (b"\x04\x22\x4d\x18" + descriptor + bytes ([(xxh32_short (descriptor) >> 8) & 0xFF]))
+    chunk_size = 0x3F0000
+
+    for offset in range (0, len (data), chunk_size):
+        chunk = data[offset:offset + chunk_size]
+        block = bytearray ()
+
+        if len (chunk) < 15:
+            block.append (len (chunk) << 4)
+        else:
+            block.append (0xF0)
+            remaining = len (chunk) - 15
+            while remaining >= 255:
+                block.append (255)
+                remaining -= 255
+            block.append (remaining)
+
+        block += chunk
+        frame += len (block).to_bytes (4, "little") + block
+
+    frame += bytes (4)
+    return bytes (frame)
+
 def get_device_package_path (device: str) -> Path | None:
     # Set Device Package Name
     package_name = f"{device}Pkg"
@@ -188,12 +236,21 @@ def compile_boot_shim (boot_shim_config: dict, fd_config: dict) -> bool:
     # Get Kernel Header Flag
     requires_kernel_header = boot_shim_config.get ("requires_kernel_header", False)
 
+    # Optional Kernel Header Overrides (Bootloaders that validate the Image Header)
+    header_defines = []
+    for key, define in (("text_offset", "KERNEL_TEXT_OFFSET"), ("image_size", "KERNEL_IMAGE_SIZE"), ("flags", "KERNEL_FLAGS")):
+        value = boot_shim_config.get (key)
+        if value is not None:
+            header_defines.append (f"-D{define}={hex (value)}")
+
     # Set Compile Command
     cmd = [
         "make",
+        "-B",
         f"REQUIRES_KERNEL_HEADER={int (requires_kernel_header)}",
         f"FD_BASE={fd_base}",
-        f"FD_SIZE={fd_size}"
+        f"FD_SIZE={fd_size}",
+        f"HEADER_DEFINES={' '.join (header_defines)}"
     ]
 
     # Compile Boot Shim
@@ -244,6 +301,7 @@ def create_android_boot_img (ctx: BuildContext, image_kernel_config: dict, image
     device_dtb      = RESOURCE_DTBS_PATH / f"{ctx.device}.dtb"
     uefi_fd         = fv_path            / "SILICIUM_UEFI.fd"
     uefi_fd_gz      = fv_path            / "SILICIUM_UEFI.fd.gz"
+    uefi_fd_lz4     = fv_path            / "SILICIUM_UEFI.fd.lz4"
 
     # Check Boot Shim Flag
     if append_boot_shim:
@@ -264,8 +322,9 @@ def create_android_boot_img (ctx: BuildContext, image_kernel_config: dict, image
             return False
 
         # Update UEFI FD Paths
-        uefi_fd    = boot_shim_fd
-        uefi_fd_gz = boot_shim_fd_gz
+        uefi_fd     = boot_shim_fd
+        uefi_fd_gz  = boot_shim_fd_gz
+        uefi_fd_lz4 = fv_path / "SILICIUM_UEFI.fd-bootshim.lz4"
 
     # Get Kernel Compression Type
     kernel_compression = image_kernel_config.get ("kernel_compression")
@@ -286,6 +345,15 @@ def create_android_boot_img (ctx: BuildContext, image_kernel_config: dict, image
                 logger.error (e)
                 return False
 
+        # Use LZ4 Frame (Bootloaders that only accept LZ4 Kernels)
+        case "lz4":
+            try:
+                uefi_fd_lz4.write_bytes (lz4_frame_literal (uefi_fd.read_bytes ()))
+            except Exception as e:
+                logger.error ("Failed to Wrap UEFI FD File in LZ4 Frame!")
+                logger.error (e)
+                return False
+
         # Use No Compression
         case "none":
             pass
@@ -295,7 +363,7 @@ def create_android_boot_img (ctx: BuildContext, image_kernel_config: dict, image
             return False
 
     # Update UEFI FD Path
-    uefi_fd = uefi_fd if kernel_compression == "none" else uefi_fd_gz
+    uefi_fd = {"none": uefi_fd, "gzip": uefi_fd_gz, "lz4": uefi_fd_lz4}[kernel_compression]
 
     # Check DTB Append Flag
     if image_kernel_config.get ("append_dtb"):
@@ -342,6 +410,7 @@ def create_android_boot_img (ctx: BuildContext, image_kernel_config: dict, image
         "kernel_offset":  "--kernel_offset",
         "os_patch_level": "--os_patch_level",
         "os_version":     "--os_version",
+        "pagesize":       "--pagesize",
         "ramdisk_offset": "--ramdisk_offset",
         "second_offset":  "--second_offset",
         "tags_offset":    "--tags_offset"
