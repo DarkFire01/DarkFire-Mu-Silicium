@@ -79,7 +79,7 @@
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
-  INF Binaries/enchilada/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
+  INF enchiladaPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
   INF Binaries/enchilada/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
   INF Binaries/enchilada/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
   INF Binaries/enchilada/QcomPkg/Drivers/HashDxe/HashDxe.inf
