@@ -16,7 +16,7 @@
 [submodule "Silicium-ACPI"]
 	path = Silicium-ACPI
 	url = https://github.com/DarkFire01/Silicium-ACPI.git
-	branch = oneplus6
+	branch = beryllium
 [submodule "Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl"]
 	path = Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl
 	url = https://github.com/openssl/openssl.git
