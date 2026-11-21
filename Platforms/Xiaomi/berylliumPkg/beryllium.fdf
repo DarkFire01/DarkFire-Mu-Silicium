@@ -93,7 +93,11 @@ READ_LOCK_STATUS   = TRUE
   # ACPI
   INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
   INF MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
+!if $(DEVICE_MODEL) == 1
+  INF RuleOverride = ACPITABLE beryllium/AcpiTablesEbbg.inf
+!else
   INF RuleOverride = ACPITABLE beryllium/AcpiTables.inf
+!endif
 
   # Device Tree
   #INF EmbeddedPkg/Drivers/DtPlatformDxe/DtPlatformDxe.inf

@@ -82,4 +82,11 @@
   #
   # ACPI Tables
   #
+  # 0 = Tianma panel with Novatek touch
+  # 1 = EBBG panel with Focaltech touch
+  #
+!if $(DEVICE_MODEL) == 1
+  beryllium/AcpiTablesEbbg.inf
+!else
   beryllium/AcpiTables.inf
+!endif
