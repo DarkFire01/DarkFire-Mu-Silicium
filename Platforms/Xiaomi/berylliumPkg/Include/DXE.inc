@@ -77,7 +77,7 @@
   INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
-  INF Binaries/beryllium/QcomPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
+  INF berylliumPkg/Drivers/UsbMsdDxe/UsbMsdDxe.inf
   INF Binaries/beryllium/QcomPkg/Drivers/UsbDeviceDxe/UsbDeviceDxe.inf
   INF Binaries/beryllium/QcomPkg/Drivers/UsbConfigDxe/UsbConfigDxe.inf
   INF Binaries/beryllium/QcomPkg/Drivers/HashDxe/HashDxe.inf
